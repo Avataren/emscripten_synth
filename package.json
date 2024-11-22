@@ -1,0 +1,16 @@
+{
+  "name": "wasm-audio",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "node build.cjs && vite build",
+    "serve": "vite preview",
+    "clean": "rimraf build dist public"
+  },
+  "devDependencies": {
+    "rimraf": "^5.0.10",
+    "vite": "^5.0.0"
+  }
+}
