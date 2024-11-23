@@ -5,28 +5,31 @@ if(NOT EMSCRIPTEN)
     message(FATAL_ERROR "This project must be compiled with Emscripten")
 endif()
 
-set(CMAKE_EXECUTABLE_SUFFIX ".js")
-
-# Set Emscripten linker flags
-set(EMSCRIPTEN_LINK_FLAGS "\
-    -sWASM=1 \
-    -sAUDIO_WORKLET=1 \
-    -sWASM_WORKERS=1 \
-    -pthread \
-    -sPTHREAD_POOL_SIZE=1 \
-    -sALLOW_MEMORY_GROWTH=1 \
-    -sWEBAUDIO_DEBUG=1 \
-    -O3 \
-    -sASSERTIONS=1 \
-    --pre-js ${CMAKE_SOURCE_DIR}/src/pre.js \
-    -sEXPORTED_RUNTIME_METHODS=['ccall','cwrap'] \
-    -sEXPORTED_FUNCTIONS=['_main'] \
-    -sENVIRONMENT='web,worker' \
-    -sMODULARIZE=1 \
-    -sEXPORT_NAME='createModule'")
-
-# Add the executable
+# Build the audio processor WASM module
 add_executable(audio_processor src/audio_processor.cpp)
+set_target_properties(audio_processor PROPERTIES LINK_FLAGS "\
+    -s STANDALONE_WASM=1 \
+    --no-entry \
+    -O3 \
+    -sEXPORTED_FUNCTIONS=\"['_process_sample']\" \
+    ")
 
-# Apply linker flags
-set_target_properties(audio_processor PROPERTIES LINK_FLAGS "${EMSCRIPTEN_LINK_FLAGS}")
+# Set output name
+set_target_properties(audio_processor PROPERTIES OUTPUT_NAME "audio_processor")
+
+# Build the sine processor WASM module
+add_executable(sine_processor src/sine_processor.cpp)
+set_target_properties(sine_processor PROPERTIES LINK_FLAGS "\
+    -s STANDALONE_WASM=1 \
+    --no-entry \
+    -O3 \
+    -sEXPORTED_FUNCTIONS=\"['_process_block']\" \
+    -sEXPORT_ALL \
+    ")
+
+# Set output name
+set_target_properties(sine_processor PROPERTIES OUTPUT_NAME "sine_processor")
+
+# Set output directory
+set_target_properties(audio_processor PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}")
+set_target_properties(sine_processor PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}")

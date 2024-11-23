@@ -6,16 +6,20 @@ function build() {
   // Define directories
   const buildDir = 'build';
   const publicDir = 'public';
+  const srcDir = 'src';
 
   // Define file paths
-  const srcPreJsPath = path.join('src', 'pre.js');
-  const buildAudioJsPath = path.join(buildDir, 'audio_processor.js');
-  const buildAwJsPath = path.join(buildDir, 'audio_processor.aw.js');
-  const buildWasmPath = path.join(buildDir, 'audio_processor.wasm');
+  const buildWasmPath1 = path.join(buildDir, 'audio_processor.wasm');
+  const buildWasmPath2 = path.join(buildDir, 'sine_processor.wasm');
 
-  const publicAudioJsPath = path.join(publicDir, 'audio_processor.js');
-  const publicAwJsPath = path.join(publicDir, 'audio_processor.aw.js'); // Changed back to original name
-  const publicWasmPath = path.join(publicDir, 'audio_processor.wasm');
+  const publicWasmPath1 = path.join(publicDir, 'audio_processor.wasm');
+  const publicWasmPath2 = path.join(publicDir, 'sine_processor.wasm');
+
+  const publicAudioProcessorJsPath = path.join(publicDir, 'audio_processor.js');
+  const publicSineProcessorJsPath = path.join(publicDir, 'sine_processor.js');
+
+  const publicMainJsPath = path.join(publicDir, 'main.js');
+  const publicIndexPath = path.join(publicDir, 'index.html');
 
   // Create the public directory if it doesn't exist
   if (!fs.existsSync(publicDir)) {
@@ -28,21 +32,21 @@ function build() {
   // Build the project
   execSync('cmake --build build', { stdio: 'inherit' });
 
-  // Read the generated files
-  const preJsContent = fs.readFileSync(srcPreJsPath, 'utf8');
-  const audioJsContent = fs.readFileSync(buildAudioJsPath, 'utf8');
-  const awJsContent = fs.readFileSync(buildAwJsPath, 'utf8');
+  // Copy WASM files
+  fs.copyFileSync(buildWasmPath1, publicWasmPath1);
+  fs.copyFileSync(buildWasmPath2, publicWasmPath2);
 
-  // Write the processed files
-  fs.writeFileSync(
-    publicAudioJsPath,
-    `${preJsContent}\n${audioJsContent}`,
-    'utf8'
+  // Copy JavaScript and HTML files
+  fs.copyFileSync(
+    path.join(srcDir, 'audio_processor.js'),
+    publicAudioProcessorJsPath
   );
-  fs.writeFileSync(publicAwJsPath, `${awJsContent}`, 'utf8');
-
-  // Copy WASM file
-  fs.copyFileSync(buildWasmPath, publicWasmPath);
+  fs.copyFileSync(
+    path.join(srcDir, 'sine_processor.js'),
+    publicSineProcessorJsPath
+  );
+  fs.copyFileSync(path.join(srcDir, 'main.js'), publicMainJsPath);
+  fs.copyFileSync('index.html', publicIndexPath);
 
   console.log('Build completed successfully.');
 }

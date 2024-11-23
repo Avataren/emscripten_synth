@@ -1,3 +1,4 @@
+// vite.config.js
 import { defineConfig } from 'vite';
 
 export default defineConfig({
@@ -8,11 +9,14 @@ export default defineConfig({
       'Cross-Origin-Opener-Policy': 'same-origin',
     },
     fs: {
-      allow: ['..'], // Allow serving files from parent directory
+      allow: ['..'], // Allow serving files from parent directory if necessary
     },
   },
   build: {
     outDir: 'dist',
+    rollupOptions: {
+      input: './public/index.html',
+    },
   },
   optimizeDeps: {
     exclude: ['audio_processor.js'],
