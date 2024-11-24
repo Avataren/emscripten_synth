@@ -1,3 +1,5 @@
+// build.cjs
+
 const { execSync } = require('child_process');
 const fs = require('fs');
 const path = require('path');
@@ -8,20 +10,7 @@ function build() {
   const publicDir = 'public';
   const srcDir = 'src';
 
-  // Define file paths
-  const buildWasmPath1 = path.join(buildDir, 'audio_processor.wasm');
-  const buildWasmPath2 = path.join(buildDir, 'sine_processor.wasm');
-
-  const publicWasmPath1 = path.join(publicDir, 'audio_processor.wasm');
-  const publicWasmPath2 = path.join(publicDir, 'sine_processor.wasm');
-
-  const publicAudioProcessorJsPath = path.join(publicDir, 'audio_processor.js');
-  const publicSineProcessorJsPath = path.join(publicDir, 'sine_processor.js');
-
-  const publicMainJsPath = path.join(publicDir, 'main.js');
-  const publicIndexPath = path.join(publicDir, 'index.html');
-
-  // Create the public directory if it doesn't exist
+  // Ensure the public directory exists
   if (!fs.existsSync(publicDir)) {
     fs.mkdirSync(publicDir);
   }
@@ -32,21 +21,29 @@ function build() {
   // Build the project
   execSync('cmake --build build', { stdio: 'inherit' });
 
-  // Copy WASM files
-  fs.copyFileSync(buildWasmPath1, publicWasmPath1);
-  fs.copyFileSync(buildWasmPath2, publicWasmPath2);
+  // Convert WASM binary to JavaScript array
+  execSync('node src/wasm_to_js_array.cjs', { stdio: 'inherit' });
 
-  // Copy JavaScript and HTML files
-  fs.copyFileSync(
-    path.join(srcDir, 'audio_processor.js'),
-    publicAudioProcessorJsPath
+  // Read the WASM array JS
+  const wasmArrayCode = fs.readFileSync(
+    path.join(buildDir, 'wave_processor_wasm.js'),
+    'utf8'
   );
-  fs.copyFileSync(
-    path.join(srcDir, 'sine_processor.js'),
-    publicSineProcessorJsPath
+
+  // Read our AudioWorkletProcessor code
+  const workletCode = fs.readFileSync(
+    path.join(srcDir, 'wave_processor_worklet.js'),
+    'utf8'
   );
-  fs.copyFileSync(path.join(srcDir, 'main.js'), publicMainJsPath);
-  fs.copyFileSync('index.html', publicIndexPath);
+
+  // Combine the code
+  const combinedCode = `${wasmArrayCode}\n${workletCode}`;
+
+  // Write the combined code to public/wave_processor_worklet.js
+  fs.writeFileSync(
+    path.join(publicDir, 'wave_processor_worklet.js'),
+    combinedCode
+  );
 
   console.log('Build completed successfully.');
 }
